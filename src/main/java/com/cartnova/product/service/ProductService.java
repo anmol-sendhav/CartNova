@@ -4,6 +4,7 @@ import com.cartnova.product.dto.request.product.ProductRequest;
 import com.cartnova.product.dto.response.product.ProductResponse;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface ProductService {
@@ -18,6 +19,8 @@ public interface ProductService {
             String sortBy,
             String direction,
             String keyword,
-            String category
+            String category,
+            BigDecimal minPrice,
+            BigDecimal maxPrice
     );
 }

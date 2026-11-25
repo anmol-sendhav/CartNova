@@ -13,6 +13,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
 import java.util.List;
 
 @Service
@@ -80,7 +82,9 @@ public class ProductServiceImpl implements ProductService {
             String sortBy,
             String direction,
             String keyword,
-            String category) {
+            String category,
+            BigDecimal minPrice,
+            BigDecimal maxPrice) {
 
         if (page < 0) {
             throw new IllegalArgumentException("Page must not be negative");
@@ -88,6 +92,22 @@ public class ProductServiceImpl implements ProductService {
 
         if (size < 1 || size > 100) {
             throw new IllegalArgumentException("Size must be between 1 and 100");
+        }
+
+        if (minPrice != null && minPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Minimum price cannot be negative");
+        }
+
+        if (maxPrice != null && maxPrice.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Maximum price cannot be negative");
+        }
+
+        if (minPrice != null && maxPrice != null
+                && minPrice.compareTo(maxPrice) > 0) {
+
+            throw new IllegalArgumentException(
+                    "Minimum price cannot be greater than maximum price"
+            );
         }
 
         List<String> allowedSortFields = List.of(
@@ -100,7 +120,10 @@ public class ProductServiceImpl implements ProductService {
 
         if (!direction.equalsIgnoreCase("asc")
                 && !direction.equalsIgnoreCase("desc")) {
-            throw new IllegalArgumentException("Direction must be asc or desc");
+
+            throw new IllegalArgumentException(
+                    "Direction must be asc or desc"
+            );
         }
 
         Sort sort = direction.equalsIgnoreCase("desc")
@@ -108,8 +131,14 @@ public class ProductServiceImpl implements ProductService {
                 : Sort.by(sortBy).ascending();
 
         Pageable pageable = PageRequest.of(page, size, sort);
+
         Specification<Product> specification =
-                ProductSpecification.filterProducts(keyword, category);
+                ProductSpecification.filterProducts(
+                        keyword,
+                        category,
+                        minPrice,
+                        maxPrice
+                );
 
         Page<Product> products =
                 productRepository.findAll(specification, pageable);
